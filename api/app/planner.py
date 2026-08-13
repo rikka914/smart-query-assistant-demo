@@ -10,7 +10,7 @@ import urllib.request
 import urllib.error
 import json
 from dataclasses import dataclass
-from models import QueryPlan,QueryFilters
+from .models import QueryPlan,QueryFilters
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -57,7 +57,7 @@ def time_range(question : str,now: datetime) -> tuple[datetime, datetime]:
         time = now - timedelta(days=365)
         return time,now
 
-    year_match = re.search(r"(20/d{2})年",question)
+    year_match = re.search(r"(20\d{2})年",question)
     if year_match:
         year = int(year_match.group(1))
         tz = now.tzinfo
@@ -73,7 +73,7 @@ def semantic_text(question:str):
     """
     text = re.sub(r"^(请)?(?:帮我)?(?:查询|查|找出|找)","",question).strip()
     text = re.sub(r"^\d{1,3}条(?:与)?","",text).strip()
-    text = re.sub(r"(?:相似|类似)的?(?:警情|情况|事件|记录","",text).strip()
+    text = re.sub(r"(?:相似|类似)的?(?:警情|情况|事件|记录)","",text).strip()
     return text or question
 
 class RuleBasedPlanner:
@@ -91,7 +91,7 @@ class RuleBasedPlanner:
         filter.district = next((item for item in DISTRICTS if item in question),None )
         filter.event_type = next((item for item in EVENT_TYPES if item in question),None)
 
-        if '各医院' or '各个医院' not in question:
+        if '各医院' not in question or '各个医院' not in question:
             filter.hospital_name = next((item for item in HOSPITALS if item in question),None)
 
         delay_match = re.search(
@@ -123,7 +123,7 @@ class RuleBasedPlanner:
         if "各区" in question or "各个区域" in question or "按区" in question:
             group_by.append("district")
         if "各类型" in question or "按警情类型" in question:
-            group_by.append("even_type")
+            group_by.append("event_type")
         if "每天" in question or "按天" in question:
             group_by.append("day")
 
@@ -171,7 +171,7 @@ class OllamaPlanner:
     - avg_response_seconds。limit 范围 1-100。时间输出带时区的 ISO 8601。
     - 相似查询把核心症状写入 semantic_query。没有明确时间时使用最近30天。
     """
-    def __int__(self, base_url: str, model: str, timeout: int = 20 ):
+    def __init__(self, base_url: str, model: str, timeout: int = 20 ):
         self.url = base_url.rstrip("/") + "/api/generate"
         self.model = model
         self.timeout = timeout
@@ -187,4 +187,19 @@ class OllamaPlanner:
                 "options": {"temperature": 0},
             }
         ).encode("utf-8")
-        
+        request = urllib.request.Request(
+            self.url, data=payload, headers={"Content-Type":"application/json"},method="POST"
+        )
+        try:
+            with urllib.request.urlopen(request,timeout=self.timeout) as respone:
+                outer = json.loads(respone.read().decode("utf-8"))
+        except (urllib.error.URLError,TimeoutError,json.JSONDecodeError) as exc:
+            raise RuntimeError(f"Ollama不可用: {exc}") from exc
+
+        try:
+            plan_json = json.loads(outer["response"])
+            plan = QueryPlan.model_validate(plan_json)
+        except (KeyError, json.JSONDecodeError, ValueError) as exc:
+            raise RuntimeError(f"模型返回的QueryPlan不合法: {exc}") from exc
+        return PlannerResult(plan=plan,source=f"Ollama:{self.model}")
+    
