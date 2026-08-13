@@ -159,4 +159,32 @@ class RuleBasedPlanner:
 
 
 class OllamaPlanner:
-    
+    """
+    调用Ollama的json模式; 返回值仍由pydantic严格验证。
+    """
+    SYSTEM_PROMPT = """
+    你是急救调度历史数据的查询计划生成器。只输出 JSON,不输出 SQL。
+    输出的内容严格按照以下内容：
+    - 允许的 intent: detail_search, aggregate, similar_case_search。
+    - filters 只允许 start_time, end_time, district, hospital_name, event_type, dispatch_status, min_dispatch_seconds。group_by 只允许 hospital_name, district, event_type, day。
+    - metric 只允许 count, avg_dispatch_seconds,
+    - avg_response_seconds。limit 范围 1-100。时间输出带时区的 ISO 8601。
+    - 相似查询把核心症状写入 semantic_query。没有明确时间时使用最近30天。
+    """
+    def __int__(self, base_url: str, model: str, timeout: int = 20 ):
+        self.url = base_url.rstrip("/") + "/api/generate"
+        self.model = model
+        self.timeout = timeout
+
+    def plan(self, question: str) -> PlannerResult:
+        payload = json.dumps(
+            {
+                "model": self.model,
+                "system": self.SYSTEM_PROMPT,
+                "prompt": question,
+                "format": "json",
+                "stream": False,
+                "options": {"temperature": 0},
+            }
+        ).encode("utf-8")
+        
