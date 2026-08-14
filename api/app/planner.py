@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 
 DISTRICTS = ("金平区","龙湖区","潮阳区","澄海区","濠江区")
 EVENT_TYPES = ("外伤","急病","交通事故","其他")
-HOSPITALS = ("市中心医院","市人民医院","附一医院","附二医院")
+HOSPITALS = ("市中心医院","市潮阳医院","市澄海医院","市濠江医院","市龙湖医院")
 
 @dataclass(frozen=True)
 class PlannerResult:
