@@ -225,7 +225,7 @@ inserted_cases AS(
     FROM curated
     RETURNING case_id
 )
-INSERT INTO dispatch.mabulance_dispatch (
+INSERT INTO dispatch.ambulance_dispatch (
     case_id,
     hospital_id,
     ambulance_code_masked,
@@ -323,7 +323,7 @@ WITH generated AS(
 
         60 + (g * 37) % 480 AS dispatch_delay,
 
-        420 + (g * 53) % 1200 AS response_delay
+        600 + (g * 53) % 1200 AS response_delay
 
     FROM generate_series(1, 1000) AS g
 ),

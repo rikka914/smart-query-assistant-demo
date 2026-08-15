@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-dispatch_demo}
       POSTGRES_USER: ${POSTGRES_USER:-demo_admin}
-      POSETGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在.env里设置管理员密码}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在.env里设置管理员密码}
       DEMO_READER_PASSWORD: ${DEMO_READER_PASSWORD:?请在.env里设置只读帐号密码}
       TZ: Asia/Shanghai
       PGTZ: Asia/Shanghai
@@ -19,7 +19,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./db/init/02-seed.sql:/docker-entrypoint-initdb.d/02-seed-sql:ro
+      - ./db/init/02-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
       - ./db/init/03-security.sh:/docker-entrypoint-initdb.d/03-security.sh:ro
 
     healthcheck:
