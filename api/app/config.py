@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings,SettingsConfigDict
 class Settings(BaseSettings):
     database_url : str = ""
     planner_mode : str = "rule"
-    ollama_base_url : str = "http://ollama:11434"
+    ollama_base_url : str = "http://127..0.1:11434"
     ollama_model : str = "qwen2.5:3b"
     audit_log_path: str = "/app/logs/query_audit.jsonl"
     app_timezone: str = "Asia/Shanghai"
@@ -21,5 +21,5 @@ class Settings(BaseSettings):
     )
 
 @lru_cache
-def get_setting() -> Settings:
+def get_settings() -> Settings:
     return Settings()
