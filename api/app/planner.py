@@ -24,7 +24,7 @@ class PlannerResult:
     source: str
     warning: str | None = None
 
-def time_range(question : str,now: datetime) -> tuple[datetime, datetime]:
+def _time_range(question : str,now: datetime) -> tuple[datetime, datetime]:
     """
     识别少量高频中文时间表达，没有时间强制最近三十天。
     """
@@ -45,7 +45,7 @@ def time_range(question : str,now: datetime) -> tuple[datetime, datetime]:
         time = now - timedelta(days=min(int(match.group(1)),366))
         return time, now
 
-    if '最近7天' in question:
+    if '最近一周' in question or '近一周' in question:
         time = now - timedelta(days=7)
         return time,now
 
@@ -67,7 +67,7 @@ def time_range(question : str,now: datetime) -> tuple[datetime, datetime]:
     time = now - timedelta(days=30)
     return time,now
 
-def semantic_text(question:str):
+def _semantic_text(question:str):
     """
     尽量去除问题中的动作词,减少相似度的影响
     """
@@ -85,7 +85,7 @@ class RuleBasedPlanner:
 
     def plan(self, question: str):
         now = datetime.now(self.timezone)
-        start_time,end_time = time_range(question,now)
+        start_time,end_time = _time_range(question,now)
 
         filter = QueryFilters(start_time=start_time, end_time=end_time)
         filter.district = next((item for item in DISTRICTS if item in question),None )
@@ -111,7 +111,7 @@ class RuleBasedPlanner:
                 QueryPlan(
                     intent="similar_case_search",
                     filters= filter,
-                    semantic_query=semantic_text(question),
+                    semantic_query= _semantic_text(question),
                     limit=limit,
                 ),
                 source="rule",
@@ -188,7 +188,9 @@ class OllamaPlanner:
             }
         ).encode("utf-8")
         request = urllib.request.Request(
-            self.url, data=payload, headers={"Content-Type":"application/json"},method="POST"
+            self.url, 
+            data=payload,
+            headers={"Content-Type":"application/json"},method="POST"
         )
         try:
             with urllib.request.urlopen(request,timeout=self.timeout) as respone:
