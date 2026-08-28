@@ -204,4 +204,38 @@ class OllamaPlanner:
         except (KeyError, json.JSONDecodeError, ValueError) as exc:
             raise RuntimeError(f"模型返回的QueryPlan不合法: {exc}") from exc
         return PlannerResult(plan=plan,source=f"Ollama:{self.model}")
-    
+
+class HybridPlanner:
+    """组合解析器,默认调用ollma模型,模型不可用时会自动回退,保证演示时业务不中断。"""
+    def __init__ (self,primary: OllamaPlanner, fallback: RuleBasedPlanner) -> None:
+        self.primary = primary
+        self.fallback = fallback
+
+    def plan(self,question: str) -> PlannerResult:
+        try:
+            result = self.primary.plan(question)
+            return result
+        except RuntimeError as exc:
+            result = self.fallback.plan(question)
+            return PlannerResult(
+                plan=result.plan,
+                source="rule-fallback",
+                warning=str(exc)
+            )
+
+def Build_Planner(mode: str, timezone: str, ollama_base_url: str, ollama_model: str):
+    """创建并返回使用者需要的解析器。"""
+    rule = RuleBasedPlanner(timezone)
+    ollama = OllamaPlanner(ollama_base_url,ollama_model)
+    hybrid = HybridPlanner(ollama,rule)
+    if mode == 'rule':
+        return rule
+
+    if mode == 'ollama':
+        return ollama
+
+    if mode == 'hybrid':
+        return hybrid
+
+    raise ValueError("PLANNER_MODE只能是rule,ollama或hybrid")
+
