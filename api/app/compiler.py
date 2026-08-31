@@ -38,3 +38,42 @@ def _where(plan: QueryPlan) -> tuple[str,dict[str,Any]]:
         
 
     return " AND ".join(clauses),params
+
+
+def compile_query(plan: QueryPlan) -> CompilerQuery:
+    where_sql, params = _where(plan)
+    params["limit"] = plan.limit
+
+    if plan.intent == 'aggregate':
+        group_expr = {
+            "district":("district", "district"),
+            "hospital_name":("hospital_name", "hospital_name"),
+            "event_type":("event_type", "event_type"),
+            "day":("day_trunc('day',alarm_time)::date AS day",
+                   "day_trunc('day',alarm_time)::date"
+                )
+        }
+
+        metric_expr = {
+            "count":"count(*)::integer AS case_count",
+            "avg_dispatch_seconds":"round(avg(avg_dispatch_seconds))::integer AS avg_dispatch_seconds",
+            "avg_response_seconds":"round(avg(avg_response_seconds))::integer AS avg_response_seconds",
+        }
+
+        selected = [group_expr[item][0] for item in plan.group_by]
+        selected.append(metric_expr[plan.metric])
+
+        group_clause = ""
+
+        if plan.group_by:
+            group_clause = " GROUP BY " + ", ".join(group_expr[item][1] for item in plan.group_by)
+
+        sql = (
+            f"SELECT {', '.join(selected)} FROM {View} WHERE {where_sql}"
+            f"{group_clause} ORDER BY 1 LIMIT :limit"
+        )
+
+        return CompilerQuery(sql,params)
+
+    if plan.intent == 'similar_case_search':
+        params["semantic_query"] = plan.semantic_query
