@@ -75,5 +75,38 @@ def compile_query(plan: QueryPlan) -> CompilerQuery:
 
         return CompilerQuery(sql,params)
 
+    detail_columns = (
+        "case_id, alarm_time, district, address_masked, event_type,"
+        "chief_complaint, case_summary, hospital_name, ambulance_code_masked,"
+        "dispatch_status, dispatch_seconds, response_seconds"
+    )
+
     if plan.intent == 'similar_case_search':
         params["semantic_query"] = plan.semantic_query
+
+        score = (
+            "round(greatest(similarity(case_summary, :semantic_query),"
+            "similarity(chief_ccomplaint, :semantic_query)"
+            ")::numeric,3)"
+        )
+
+        sql = (
+            f"SELECT {detail_columns}, "
+            f"{score} AS similarity "
+            f"FROM {View} "
+            f"WHERE {where_sql} "
+            f"ORDER BY similarity DESC, "
+            f"alarm_time DESC "
+            f"LIMIT :limit"
+        )
+
+        return CompilerQuery(sql,params)
+
+    sql = (
+        f"SELECT {detail_columns}, "
+        f"FROM {View} "
+        f"WHERE {where_sql} "
+        f"ORDER BY alarm_time DESC "
+        f"LIMIT :limit"
+    )
+    return CompilerQuery(sql,params)
