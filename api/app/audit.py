@@ -17,7 +17,7 @@ class JsonlAuditWriter:
             *,
             user_id: str,
             question: str,
-            query_plan: dict[str,Any],
+            query_plan: dict[str,Any]|None,
             return_rows: int,
             elapse_ms: int,
             succeeded: bool,

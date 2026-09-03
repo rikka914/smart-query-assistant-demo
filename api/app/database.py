@@ -1,7 +1,14 @@
 """只读数据库访问层"""
 
+from datetime import datetime,date
+from decimal import Decimal
+from typing import Any
+
 from sqlalchemy import create_engine,text
 from sqlalchemy.engine import Engine
+
+from .compiler import CompilerQuery
+
 
 def create_readonly_engine(database_url: str) -> Engine:
     """
@@ -32,6 +39,15 @@ def create_readonly_engine(database_url: str) -> Engine:
         }
     )
 
+def _json_value(value: Any) -> Any:
+    if isinstance(value,(date,datetime)):
+        return value.isoformat()
+
+    if isinstance(value,Decimal):
+        return float(value)
+
+    return value
+
 class QueryRespository:
     """
     封装助手允许进行的数据库操作。
@@ -52,3 +68,18 @@ class QueryRespository:
             value = result.scalar_one()
 
         return value == 1
+
+    def execute(self,compiled:CompilerQuery) -> tuple[list[str],list[dict[str,Any]]]:
+        # text() 识别 :name 占位符, params与SQL模板分别传给驱动
+        with self.engine.connect() as connection:
+            result = connection.execute(text(compiled.sql),compiled.params)
+            columns = list(result.keys())
+            rows = [
+                {   
+                    key: _json_value(value)
+                    for key, value in row._mapping.item()
+                }
+                for row in result.fetchall()
+            ]
+            
+        return columns,rows
