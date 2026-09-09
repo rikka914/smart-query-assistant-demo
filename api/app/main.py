@@ -7,7 +7,7 @@ from sqlalchemy.exc import DBAPIError,SQLAlchemyError
 from .audit import JsonlAuditWriter
 from .compiler import compile_query
 from .config import get_settings
-from .database import QueryRespository, create_readonly_engine
+from .database import QueryRepository, create_readonly_engine
 from .models import QueryRequest,QueryResponse
 from .planner import Build_Planner
 from .validator import QueryPlanValidatorError,validate_and_normalize
@@ -19,7 +19,7 @@ planner = Build_Planner(
     ollama_base_url=setting.ollama_base_url,
     ollama_model=setting.ollama_model
 )
-repository = QueryRespository(create_readonly_engine(setting.database_url))
+repository = QueryRepository(create_readonly_engine(setting.database_url))
 audit = JsonlAuditWriter(setting.audit_log_path)
 
 app = FastAPI(
@@ -32,7 +32,7 @@ app = FastAPI(
 def live() -> dict[str,str]:
     return {"status": "ok"}
 
-@app.get("/helath/ready")
+@app.get("/health/ready")
 def ready() -> dict[str,str]:
     try:
         if repository.ready():

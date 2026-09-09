@@ -48,7 +48,7 @@ def _json_value(value: Any) -> Any:
 
     return value
 
-class QueryRespository:
+class QueryRepository:
     """
     封装助手允许进行的数据库操作。
     """

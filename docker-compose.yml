@@ -30,8 +30,6 @@ services:
       timeout: 5s
       retries: 20
 
-volumes:
-  postgres_data:
 
   api:
     image: smart-query-api-test
@@ -67,3 +65,7 @@ volumes:
       interval: 10s
       timeout: 5s
       retries: 12 
+
+volumes:
+  postgres_data:
+  audit_logs:
