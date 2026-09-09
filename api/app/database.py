@@ -77,7 +77,7 @@ class QueryRespository:
             rows = [
                 {   
                     key: _json_value(value)
-                    for key, value in row._mapping.item()
+                    for key, value in row._mapping.items()
                 }
                 for row in result.fetchall()
             ]

@@ -49,15 +49,15 @@ def compile_query(plan: QueryPlan) -> CompilerQuery:
             "district":("district", "district"),
             "hospital_name":("hospital_name", "hospital_name"),
             "event_type":("event_type", "event_type"),
-            "day":("day_trunc('day',alarm_time)::date AS day",
-                   "day_trunc('day',alarm_time)::date"
+            "day":("date_trunc('day',alarm_time)::date AS day",
+                   "date_trunc('day',alarm_time)::date"
                 )
         }
 
         metric_expr = {
             "count":"count(*)::integer AS case_count",
-            "avg_dispatch_seconds":"round(avg(avg_dispatch_seconds))::integer AS avg_dispatch_seconds",
-            "avg_response_seconds":"round(avg(avg_response_seconds))::integer AS avg_response_seconds",
+            "avg_dispatch_seconds":"round(avg(dispatch_seconds))::integer AS avg_dispatch_seconds",
+            "avg_response_seconds":"round(avg(response_seconds))::integer AS avg_response_seconds",
         }
 
         selected = [group_expr[item][0] for item in plan.group_by]
@@ -86,12 +86,12 @@ def compile_query(plan: QueryPlan) -> CompilerQuery:
 
         score = (
             "round(greatest(similarity(case_summary, :semantic_query),"
-            "similarity(chief_ccomplaint, :semantic_query)"
+            "similarity(chief_complaint, :semantic_query)"
             ")::numeric,3)"
         )
 
         sql = (
-            f"SELECT {detail_columns}, "
+            f"SELECT {detail_columns} "
             f"{score} AS similarity "
             f"FROM {View} "
             f"WHERE {where_sql} "
@@ -103,7 +103,7 @@ def compile_query(plan: QueryPlan) -> CompilerQuery:
         return CompilerQuery(sql,params)
 
     sql = (
-        f"SELECT {detail_columns}, "
+        f"SELECT {detail_columns} "
         f"FROM {View} "
         f"WHERE {where_sql} "
         f"ORDER BY alarm_time DESC "

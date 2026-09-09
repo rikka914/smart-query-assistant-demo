@@ -28,11 +28,11 @@ app = FastAPI(
     description="仅查询历史脱敏调度数据；不用于诊断或实时派车。"
 )
 
-@app.get("health/live")
+@app.get("/health/live")
 def live() -> dict[str,str]:
     return {"status": "ok"}
 
-@app.get("helath/ready")
+@app.get("/helath/ready")
 def ready() -> dict[str,str]:
     try:
         if repository.ready():
@@ -41,10 +41,10 @@ def ready() -> dict[str,str]:
         raise HTTPException(status_code=503,detail="数据库未就绪") from exc
     raise HTTPException(status_code=503,detail="数据库未就绪")
 
-@app.get("api/vi/example")
-def example() -> dict[str,list[str]]:
+@app.get("/api/v1/example")
+def examples() -> dict[str,list[str]]:
     return {
-        "example":[
+        "examples":[
             "查询最近7天各医院的派车数量",
             "找出最近30天海淀区派车超过5分钟的记录",
             "找10条与老人胸闷出冷汗意识模糊相似的警情",
