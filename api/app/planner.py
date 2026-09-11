@@ -166,23 +166,33 @@ class OllamaPlanner:
     你是急救调度历史数据的查询计划生成器。只输出 JSON,不输出 SQL。
     输出的内容严格按照以下内容：
     - 允许的 intent: detail_search, aggregate, similar_case_search。
-    - filters 只允许 start_time, end_time, district, hospital_name, event_type, dispatch_status, min_dispatch_seconds。group_by 只允许 hospital_name, district, event_type, day。
+    - filters 只允许 start_time, end_time, district, hospital_name, event_type, dispatch_status, min_dispatch_seconds。
+        group_by 必须是 JSON 数组。即使是只有一个字段也必须使用数组;数组元素只允许 hospital_name, district, event_type, day。
     - metric 只允许 count, avg_dispatch_seconds,
     - avg_response_seconds。limit 范围 1-100。时间输出带时区的 ISO 8601。
     - 相似查询把核心症状写入 semantic_query。没有明确时间时使用最近30天。
     """
-    def __init__(self, base_url: str, model: str, timeout: int = 20 ):
+    def __init__(self, base_url: str, model: str, timezone: str = "Asia/Shanghai",timeout: int = 20 ):
         self.url = base_url.rstrip("/") + "/api/generate"
         self.model = model
         self.timeout = timeout
-
+        self.timezone = ZoneInfo(timezone)
+        
     def plan(self, question: str) -> PlannerResult:
+        now = datetime.now(self.timezone)
+        system_prompt = (
+            f"{self.SYSTEM_PROMPT}\n"
+            f"当前时间: {now.isoformat()}。\n"
+            "解析”最近N天“时，end_time 使用当前时间，"
+            "start_time使用当前时间减去N天; 不要使用模型训练数据中的日期。"
+        )
+
         payload = json.dumps(
             {
                 "model": self.model,
-                "system": self.SYSTEM_PROMPT,
+                "system": system_prompt,
                 "prompt": question,
-                "format": "json",
+                "format": QueryPlan.model_json_schema(),
                 "stream": False,
                 "options": {"temperature": 0},
             }
@@ -226,7 +236,7 @@ class HybridPlanner:
 def Build_Planner(mode: str, timezone: str, ollama_base_url: str, ollama_model: str):
     """创建并返回使用者需要的解析器。"""
     rule = RuleBasedPlanner(timezone)
-    ollama = OllamaPlanner(ollama_base_url,ollama_model)
+    ollama = OllamaPlanner(ollama_base_url,ollama_model,timezone=timezone)
     hybrid = HybridPlanner(ollama,rule)
     if mode == 'rule':
         return rule

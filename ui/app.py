@@ -49,7 +49,7 @@ if st.button("开始查询",type="primary",use_container_width=True):
                     timeout=30,
                 )
 
-            if response != 200:
+            if response.status_code != 200:
                 detail = response.json().get("detail", response.text)
                 st.error(f"查询失败: {detail}")
 
@@ -58,7 +58,7 @@ if st.button("开始查询",type="primary",use_container_width=True):
 
                 c1,c2,c3 = st.columns(3)
                 c1.metric("返回记录",result["row_count"])
-                c2.metric("总耗时",f"{result['elapse_ms']} ms")
+                c2.metric("总耗时",f"{result['elapsed_ms']} ms")
                 c3.metric("计划生成器",result["planner"])
 
                 if result.get("planner_warning"):

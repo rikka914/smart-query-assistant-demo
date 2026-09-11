@@ -5,7 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install --index-url "$PIP_INDEX_URL" --no-cache-dir --retries 10 --timeout 120 -r requirements.txt
+
 COPY app.py .
 
 EXPOSE 8501
