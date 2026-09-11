@@ -91,7 +91,7 @@ def compile_query(plan: QueryPlan) -> CompilerQuery:
         )
 
         sql = (
-            f"SELECT {detail_columns} "
+            f"SELECT {detail_columns}, "
             f"{score} AS similarity "
             f"FROM {View} "
             f"WHERE {where_sql} "
