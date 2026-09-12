@@ -183,7 +183,7 @@ class OllamaPlanner:
         system_prompt = (
             f"{self.SYSTEM_PROMPT}\n"
             f"当前时间: {now.isoformat()}。\n"
-            "解析”最近N天“时，end_time 使用当前时间，"
+            "解析”最近N天“时,end_time 使用当前时间，"
             "start_time使用当前时间减去N天; 不要使用模型训练数据中的日期。"
         )
 
@@ -211,6 +211,11 @@ class OllamaPlanner:
         try:
             plan_json = json.loads(outer["response"])
             plan = QueryPlan.model_validate(plan_json)
+
+            start_time,end_time = _time_range(question,now)
+            plan.filters.start_time = start_time
+            plan.filters.end_time = end_time
+
         except (KeyError, json.JSONDecodeError, ValueError) as exc:
             raise RuntimeError(f"模型返回的QueryPlan不合法: {exc}") from exc
         return PlannerResult(plan=plan,source=f"Ollama:{self.model}")
