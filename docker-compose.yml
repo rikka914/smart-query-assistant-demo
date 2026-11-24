@@ -41,7 +41,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://demo_reader:${DEMO_READER_PASSWORD}@postgres:5432/${POSTGRES_DB:-dispatch_demo}
       PLANNER_MODE: ${PLANNER_MODE:-rule}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://192.168.1.100:11434}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://127.0.0.1:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:9b-q4_K_M}
       AUDIT_LOG_PATH: /app/logs/query_audit.jsonl
       APP_TIMEZONE: Asia/Shanghai

@@ -1,5 +1,21 @@
+# 真实配置（含密码），只提交 .env.example
 .env
+.env.*
+!.env.example
+
+# Python 虚拟环境与缓存
+venv/
+.venv/
 __pycache__/
 *.pyc
-.venv/
-venv/
+*.pyo
+
+# 运行产物
+logs/
+*.log
+data/
+
+# 编辑器与系统文件
+.vscode/
+.idea/
+.DS_Store

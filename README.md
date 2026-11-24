@@ -34,7 +34,7 @@ flowchart TD
     U["浏览器用户"] --> S["Streamlit UI<br/>Linux Docker"]
     S --> A["FastAPI<br/>Linux Docker"]
     A --> H["HybridPlanner"]
-    H --> O["Ollama<br/>Windows 192.168.1.101"]
+    H --> O["Ollama<br/>Windows <OLLAMA_HOST>"]
     H -. "模型不可用" .-> R["RuleBasedPlanner"]
     H --> V["Validator"]
     R --> V
@@ -47,8 +47,8 @@ flowchart TD
 
 | 项目 | 当前配置 |
 |---|---|
-| Linux/Docker 主机 | `192.168.1.198` |
-| Windows/Ollama 主机 | `192.168.1.101` |
+| Linux/Docker 主机 | `<LINUX_HOST>` |
+| Windows/Ollama 主机 | `<OLLAMA_HOST>` |
 | Ollama 端口 | `11434` |
 | Ollama 模型 | `qwen35-local:latest` |
 | Planner 模式 | `hybrid` |
@@ -67,8 +67,7 @@ ui/            Streamlit查询页面
 db/init/       建表、模拟数据、索引、视图和只读账号
 scripts/       静态检查、数据库冒烟测试和端到端测试
 tests/         不依赖数据库的单元测试
-docs/          架构、部署和真实数据库接入文档
-compose.yaml   PostgreSQL、API和UI的Compose编排
+docker-compose.yml  PostgreSQL、API和UI的Compose编排
 .env.example   不含真实密码的配置模板
 ```
 
@@ -115,7 +114,7 @@ OLLAMA_HOST=0.0.0.0:11434
 当前防火墙应只允许：
 
 ```text
-来源IP：192.168.1.198
+来源IP：<LINUX_HOST>
 目标端口：TCP 11434
 ```
 
@@ -143,7 +142,7 @@ ollama run qwen35-local:latest "请只回答：模型运行正常"
 
 ```bash
 curl -sS --max-time 5 \
-  http://192.168.1.101:11434/api/tags |
+  http://<OLLAMA_HOST>:11434/api/tags |
   python3 -m json.tool
 ```
 
@@ -168,7 +167,7 @@ DEMO_READER_PASSWORD=请替换为只读账号强密码
 POSTGRES_PORT=5432
 
 PLANNER_MODE=hybrid
-OLLAMA_BASE_URL=http://192.168.1.101:11434
+OLLAMA_BASE_URL=http://<OLLAMA_HOST>:11434
 OLLAMA_MODEL=qwen35-local:latest
 
 API_PORT=8000
@@ -189,7 +188,7 @@ docker compose ps
 ### 3. 访问系统
 
 - Streamlit 页面：<http://localhost:8501>
-- 局域网页面：<http://192.168.1.198:8501>
+- 局域网页面：`http://<LINUX_HOST>:8501`
 - FastAPI 文档：<http://localhost:8000/docs>
 - API 存活检查：<http://localhost:8000/health/live>
 - API 就绪检查：<http://localhost:8000/health/ready>
